@@ -3,8 +3,8 @@
  * Dan Funk
  *
  * plugin displays a phrase with one or more missing letters.
- * The participant is prompted to guess what letter
- * to select from a series of possible choices.
+ * The participant is prompted to guess the correct missing letter
+ * by selecting from a series of possible choices.
  */
 
 jsPsych.plugins["missing-letters"] = (function () {
@@ -14,11 +14,9 @@ jsPsych.plugins["missing-letters"] = (function () {
     plugin.trial = function (display_element, trial) {
 
         // set default values for parameters
-        trial.statement = trial.statement || 'This statement has a ';
-        trial.final_phrase = trial.final_phrase || 'final phrase';
-        trial.button_html = trial.button_html || '<button class="jspsych-btn">%choice%</button>';
-        trial.response_ends_trial = (typeof trial.response_ends_trial === 'undefined') ? true : trial.response_ends_trial;
+        trial.phrase = trial.phrase || 'final phrase';
         trial.letters_to_remove = trial.letters_to_remove || 1;
+        trial.button_html = trial.button_html || '<button class="jspsych-btn">%choice%</button>';
 
         // if any trial variables are functions
         // this evaluates the function and replaces
@@ -33,24 +31,18 @@ jsPsych.plugins["missing-letters"] = (function () {
         var term;
         var missing_letters;
         var letter_index = 0;
-        [term, missing_letters] = removeRandomLetters(trial.final_phrase, trial.letters_to_remove);
+        [term, missing_letters] = removeRandomLetters(trial.phrase, trial.letters_to_remove);
 
-        // Display the statement.
-        var sentences = trial.statement.split(".");
-        var sentence_index = 0;
+        // Display the term
+        display_element.append($('<div>', {
+                html: term,
+                id: 'jspsych-missing-letters-letter',
+                class: 'center-content block-center'
+        }));
 
-        display_element.append('<div id="jspsych-missing-letters-statement" class="center-content block-center"></div>');
-        reveal_statement();
-
-        // Display the continue button.
+        // Show letters for completing the term
         display_element.append('<div id="jspsych-missing-letters-btngroup" class="center-content block-center"></div>');
-        var continue_button = trial.button_html.replace(/%choice%/g, "continue ...");
-        $('#jspsych-missing-letters-btngroup').append(
-            $(continue_button).attr('id', 'jspsych-missing-letters-continue').addClass('jspsych-button-response-button').on('click', function (e) {
-                after_response("continue");
-            })
-        );
-        //showLetterOptions(missing_letters[letter_index]);
+        show_letter_options(missing_letters[letter_index]);
 
         // store response
         var response = {
@@ -61,19 +53,6 @@ jsPsych.plugins["missing-letters"] = (function () {
 
         // start time
         var start_time = 0;
-
-        // Divides the next sentence in the statement.
-        function reveal_statement() {
-            var sentence = sentences[sentence_index];
-            if (sentence_index < sentences.length - 1) sentence += ".";
-            else sentence += ' <span id="jspsych-missing-letters-letter">' + term + "</span>.";
-
-            $('#jspsych-missing-letters-statement')
-                .append($('<p>', {
-                    html: sentence,
-                    class: 'block-center'
-                }));
-        }
 
         // Creates a row of 4 buttons, one is the letter the participant should select, the reset are randomly
         // selected letters.
@@ -93,7 +72,6 @@ jsPsych.plugins["missing-letters"] = (function () {
             }
         }
 
-
         // function to handle responses by the subject
         function after_response(choice) {
 
@@ -103,22 +81,6 @@ jsPsych.plugins["missing-letters"] = (function () {
             response.button.push(choice);
             response.rt = rt;
 
-            if (choice == "continue") {
-                if (sentence_index < sentences.length - 1) {
-                    sentence_index++;
-                    reveal_statement();
-                }
-                if (sentence_index == sentences.length - 1) {
-                    show_letter_options(missing_letters[letter_index]);
-                }
-            } else {
-                after_response_letter(choice);
-            }
-
-        }
-
-        // handle response for a letter selection.
-        function after_response_letter(choice) {
             if (missing_letters[letter_index] != choice) {
                 response.correct = false;
                 return;
@@ -140,7 +102,6 @@ jsPsych.plugins["missing-letters"] = (function () {
 
             end_trial();
 
-
         }
 
 
@@ -155,7 +116,7 @@ jsPsych.plugins["missing-letters"] = (function () {
             // gather the data to store for the trial
             var trial_data = {
                 "rt": response.rt,
-                "stimulus": trial.statement,
+                "stimulus": trial.term,
                 "button_pressed": response.button,
                 "correct": response.correct
 
