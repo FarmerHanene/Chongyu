@@ -19,7 +19,7 @@ jsPsych.plugins["missing-letters"] = (function () {
         trial.final_phrase = trial.final_phrase || 'final phrase';
         trial.button_html = trial.button_html || '<button class="jspsych-btn">%choice%</button>';
         trial.response_ends_trial = (typeof trial.response_ends_trial === 'undefined') ? true : trial.response_ends_trial;
-        trial.total_missing = trial.final_phrase || 1;
+        trial.letters_to_remove = trial.letters_to_remove || 1;
 
         // if any trial variables are functions
         // this evaluates the function and replaces
@@ -30,31 +30,21 @@ jsPsych.plugins["missing-letters"] = (function () {
         // that need to be cleared if the trial ends early
         var setTimeoutHandlers = [];
 
-        // remove a random letter from the term.
+        // remove random letters from the term.
         var term;
-        var missing_letter;
-        [term, missing_letter] = removeRandomLetter(trial.final_phrase);
-        var options = fakeLetter(missing_letter);
-        var choices = shuffle([missing_letter, options[0], options[1], options[2]]);
+        var missing_letters;
+        var letter_index = 0;
+        [term, missing_letters] = removeRandomLetters(trial.final_phrase, trial.letters_to_remove);
 
         // Display the statement.
         display_element.append($('<div>', {
-            html: trial.statement + " " + term,
+            html: trial.statement + " " + "<span id='jspsych-missing-term'>" + term + "</span>",
             id: 'jspsych-missing-letter-stimulus',
             class: 'block-center'
         }));
 
-        // Display some random letter buttons
-        display_element.append('<div id="jspsych-button-response-btngroup" class="center-content block-center"></div>')
-        for (var i = 0; i < choices.length; i++) {
-            var str = trial.button_html.replace(/%choice%/g, choices[i]);
-            $('#jspsych-button-response-btngroup').append(
-                $(str).attr('id', 'jspsych-button-response-button-' + i).data('choice', choices[i]).addClass('jspsych-button-response-button').on('click', function (e) {
-                    var choice = $('#' + this.id).data('choice');
-                    after_response(choice);
-                })
-            );
-        }
+        display_element.append('<div id="jspsych-button-response-btngroup" class="center-content block-center"></div>');
+        showLetterOptions(missing_letters[letter_index]);
 
         // store response
         var response = {
@@ -66,6 +56,25 @@ jsPsych.plugins["missing-letters"] = (function () {
         // start time
         var start_time = 0;
 
+        // Creates a row of 4 buttons, one is the letter the participant should select, the reset are randomly
+        // selected letters.
+        function showLetterOptions(letter) {
+            $('#jspsych-button-response-btngroup').empty();
+            var options = fakeLetter(letter);
+            var choices = shuffle([letter, options[0], options[1], options[2]]);
+
+            for (var i = 0; i < choices.length; i++) {
+                var str = trial.button_html.replace(/%choice%/g, choices[i]);
+                $('#jspsych-button-response-btngroup').append(
+                    $(str).attr('id', 'jspsych-button-response-button-' + i).data('choice', choices[i]).addClass('jspsych-button-response-button').on('click', function (e) {
+                        var choice = $('#' + this.id).data('choice');
+                        after_response(choice);
+                    })
+                );
+            }
+        }
+
+
         // function to handle responses by the subject
         function after_response(choice) {
 
@@ -75,8 +84,15 @@ jsPsych.plugins["missing-letters"] = (function () {
             response.button.push(choice);
             response.rt = rt;
 
-            if(missing_letter != choice) {
+            if(missing_letters[letter_index] != choice) {
                 response.correct = false;
+                return;
+            }else if(letter_index + 1 < missing_letters.length) {
+                letter_index++;
+                $('#jspsych-missing-term').html(function() {
+                    return $(this).html().replace('[&nbsp;]', "[" + choice + "]");
+                });
+                showLetterOptions(missing_letters[letter_index]);
                 return;
             }
 
@@ -116,31 +132,25 @@ jsPsych.plugins["missing-letters"] = (function () {
         };
 
 
+        // *******************************
         // General functions to make this a bit easier to read.
         // *******************************
 
-        // this is the function to remove a random letter
-        function removeRandomLetter(str) {
-            var pos = Math.floor(Math.random() * str.length);
-            return [str.substring(0, pos) + "[&nbsp;&nbsp;]" + str.substring(pos + 1), str.charAt(pos)];
-        }
 
         // this is the function to remove N number of random letters
         // returns an array containing the original string, followed by
         // a 
-        // ie. given 'capital',1 returns ['ca[ ]ital']
-        // ie. given 'animal',2 returns [['a','n'],'a[ ][ ]imal']
+        // ie. given 'capital',1 returns ['ca[ ]ital', ['p']]
+        // ie. given 'animal',2 returns ['a[ ][ ]mal', ['n','i']]
         function removeRandomLetters(str, amount) {
             if(str == null) return ["",""];
 
-            var letters = "";
+            var letters = [];
             var pos = 0;
             var tries = 0;
             // select a value that is a word character, not a space or punctuation
-            // And don't select the first letter in the phase.
-            // Don't try to look forever.
+            // And don't select the first letter in the phase, And Don't try to look forever.
             while (letters == "") {
-
                 tries ++;
                 // Pick a random position in the string, greater than 0
                 pos = Math.floor(Math.random() * (str.length - 1)) + 1;
@@ -160,11 +170,11 @@ jsPsych.plugins["missing-letters"] = (function () {
                 }
                 if (amount == 0) break;
             }
-            return [str.substring(0,pos) + "[ ]".repeat(amount) + str.substring(pos+amount), letters];
+            return [str.substring(0,pos) + "[&nbsp;]".repeat(amount) + str.substring(pos+amount), letters.split('')];
         }
 
         // This is the function to create non-repeated counter options
-        // for missing letter
+        // for missing letters
         function fakeLetter(answer) {
             // the possible letters to choose from
             var possible = "abcdefghijklmnopqrstuvwxyz";
