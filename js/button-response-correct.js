@@ -1,14 +1,13 @@
 /**
- * jspsych-button-response
- * Josh de Leeuw
  *
- * plugin for displaying a stimulus and getting a keyboard response
+ * plugin based on the button-response, but requires a correct answer
+ * in order to proceed.
  *
  * documentation: docs.jspsych.org
  *
  **/
 
-jsPsych.plugins["button-response"] = (function() {
+jsPsych.plugins["button-response-correct"] = (function() {
 
   var plugin = {};
 
@@ -21,6 +20,9 @@ jsPsych.plugins["button-response"] = (function() {
     trial.timing_response = trial.timing_response || -1; // if -1, then wait for response forever
     trial.is_html = (typeof trial.is_html === 'undefined') ? false : trial.is_html;
     trial.prompt = (typeof trial.prompt === 'undefined') ? "" : trial.prompt;
+    trial.correct_response = trial.correct_choice || '';
+    trial.incorrect_message = trial.incorrect_message || 'That response is incorrect, in a moment you will have a chance to respond again.';
+    trial.delay = trial.delay || 6000; // Seconds to delay, if incorrect response is provided.
 
     // if any trial variables are functions
     // this evaluates the function and replaces
@@ -31,7 +33,7 @@ jsPsych.plugins["button-response"] = (function() {
     // that need to be cleared if the trial ends early
     var setTimeoutHandlers = [];
 
-    // display stimulus
+      // display stimulus
     if (!trial.is_html) {
       display_element.append($('<img>', {
         src: trial.stimulus,
@@ -42,11 +44,19 @@ jsPsych.plugins["button-response"] = (function() {
       display_element.append($('<div>', {
         html: trial.stimulus,
         id: 'jspsych-button-response-stimulus',
-        class: 'block-center'
+        class: 'block-center center-content'
       }));
     }
 
-    //display buttons
+    // establish, but hide the error message.
+      display_element.append($('<div>', {
+          html: trial.incorrect_message,
+          id: 'jspsych-button-response-incorrect',
+          class: 'block-center center-content error',
+          style: 'display: none'
+      }));
+
+      //display buttons
     var buttons = [];
     if (Array.isArray(trial.button_html)) {
       if (trial.button_html.length == trial.choices.length) {
@@ -63,7 +73,7 @@ jsPsych.plugins["button-response"] = (function() {
     for (var i = 0; i < trial.choices.length; i++) {
       var str = buttons[i].replace(/%choice%/g, trial.choices[i]);
       $('#jspsych-button-response-btngroup').append(
-        $(str).attr('id', 'jspsych-button-response-button-' + i).data('choice', i).addClass('jspsych-button-response-button').on('click', function(e) {
+        $(str).attr('id', 'jspsych-button-response-button-' + i).data('choice', trial.choices[i]).addClass('jspsych-button-response-button').on('click', function(e) {
           var choice = $('#' + this.id).data('choice');
           after_response(choice);
         })
@@ -93,6 +103,12 @@ jsPsych.plugins["button-response"] = (function() {
       response.button = choice;
       response.rt = rt;
 
+      // If the response is not correct, force them to pause.
+      if(choice != trial.correct_choice) {
+        handle_incorrect();
+        return;
+      }
+
       // after a valid response, the stimulus will have the CSS class 'responded'
       // which can be used to provide visual feedback that a response was recorded
       $("#jspsych-button-response-stimulus").addClass('responded');
@@ -104,6 +120,19 @@ jsPsych.plugins["button-response"] = (function() {
         end_trial();
       }
     };
+
+    // Deals with an incorrect response, by hiding the buttons, showing an error message
+    // forcing a pause of 2 seconds, then redisplaying the buttons.
+    function handle_incorrect() {
+      $("#jspsych-button-response-incorrect").show();
+      $("#jspsych-button-response-btngroup").hide();
+
+        setTimeout(function() {
+            $("#jspsych-button-response-incorrect").hide();
+            $("#jspsych-button-response-btngroup").show();
+        }, trial.delay);
+
+    }
 
     // function to end trial when it is time
     function end_trial() {

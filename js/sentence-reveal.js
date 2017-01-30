@@ -52,6 +52,15 @@ jsPsych.plugins["sentence-reveal"] = (function () {
             correct: true
         };
 
+        // Shows the continue button, but only after a pause based of 10ms for each word
+        // in the currently displayed sentence.
+        function show_continue_button() {
+            var timing_fixation = sentences[sentence_index].split(' ').length * 100;
+            setTimeout(function() {
+                $('#jspsych-sentence-reveal-btngroup').show();
+            }, timing_fixation);
+        }
+
         // reveals the next sentence
         function reveal_sentence() {
             var sentence = sentences[sentence_index];
@@ -73,13 +82,17 @@ jsPsych.plugins["sentence-reveal"] = (function () {
             response.button.push(choice);
             response.rt = rt;
 
+            $('#jspsych-sentence-reveal-btngroup').hide();
+
             if (sentence_index < sentences.length - 1) {
                 sentence_index++;
                 reveal_sentence();
             }
+
             if (sentence_index == sentences.length - 1) {
-                $('#jspsych-sentence-reveal-btngroup').hide();
                 end_trial();
+            } else {
+                show_continue_button();
             }
         }
 

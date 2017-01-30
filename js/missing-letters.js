@@ -4,7 +4,7 @@
  *
  * plugin displays a phrase with one or more missing letters.
  * The participant is prompted to guess the correct missing letter
- * by selecting from a series of possible choices.
+ * by selecting from a 4 possible choices.
  */
 
 jsPsych.plugins["missing-letters"] = (function () {
@@ -31,7 +31,7 @@ jsPsych.plugins["missing-letters"] = (function () {
         var term;
         var missing_letters;
         var letter_index = 0;
-        [term, missing_letters] = removeRandomLetters(trial.phrase, trial.letters_to_remove);
+        [term, missing_letters] = remove_random_letters(trial.phrase, trial.letters_to_remove);
 
         // Display the term
         display_element.append($('<div>', {
@@ -58,7 +58,7 @@ jsPsych.plugins["missing-letters"] = (function () {
         // selected letters.
         function show_letter_options(letter) {
             $('#jspsych-missing-letters-btngroup').empty();
-            var options = fakeLetter(letter);
+            var options = fake_letter(letter);
             var choices = shuffle([letter, options[0], options[1], options[2]]);
 
             for (var i = 0; i < choices.length; i++) {
@@ -66,14 +66,14 @@ jsPsych.plugins["missing-letters"] = (function () {
                 $('#jspsych-missing-letters-btngroup').append(
                     $(str).attr('id', 'jspsych-button-response-button-' + i).data('choice', choices[i]).addClass('jspsych-button-response-button').on('click', function (e) {
                         var choice = $('#' + this.id).data('choice');
-                        after_response(choice);
+                        after_response(choice, this.id);
                     })
                 );
             }
         }
 
         // function to handle responses by the subject
-        function after_response(choice) {
+        function after_response(choice, id) {
 
             // measure the response time.
             var end_time = Date.now();
@@ -83,12 +83,16 @@ jsPsych.plugins["missing-letters"] = (function () {
 
             if (missing_letters[letter_index] != choice) {
                 response.correct = false;
+                $('#' + id).addClass("incorrect");
                 return;
-            } else if (letter_index + 1 < missing_letters.length) {
+            }
+
+            $('#jspsych-missing-letters-letter').html(function () {
+                return $(this).html().replace('[&nbsp;]', "[" + choice + "]");
+            });
+
+            if (letter_index + 1 < missing_letters.length) {
                 letter_index++;
-                $('#jspsych-missing-letters-letter').html(function () {
-                    return $(this).html().replace('[&nbsp;]', "[" + choice + "]");
-                });
                 show_letter_options(missing_letters[letter_index]);
                 return;
             }
@@ -100,8 +104,11 @@ jsPsych.plugins["missing-letters"] = (function () {
             // disable all the buttons after a response
             $('.jspsych-button-response-button').off('click').attr('disabled', 'disabled');
 
-            end_trial();
-
+            // Pause for a 1/2 second to show that the letter is correctly entered,
+            // then end the trail.
+            setTimeout(function() {
+                end_trial();
+            }, 500);
         }
 
 
@@ -140,7 +147,7 @@ jsPsych.plugins["missing-letters"] = (function () {
         // a 
         // ie. given 'capital',1 returns ['ca[ ]ital', ['p']]
         // ie. given 'animal',2 returns ['a[ ][ ]mal', ['n','i']]
-        function removeRandomLetters(str, amount) {
+        function remove_random_letters(str, amount) {
             if (str == null) return ["", ""];
 
             var letters = [];
@@ -173,7 +180,7 @@ jsPsych.plugins["missing-letters"] = (function () {
 
         // This is the function to create non-repeated counter options
         // for missing letters
-        function fakeLetter(answer) {
+        function fake_letter(answer) {
             // the possible letters to choose from
             var possible = "abcdefghijklmnopqrstuvwxyz";
             var exAns = [answer, answer, answer];
