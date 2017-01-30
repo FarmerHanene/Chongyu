@@ -20,12 +20,16 @@ body, html {
     background-color: #f6f5ea;
 }
 
+div.piPlayerHeader {
+    width: 100%;
+    background: #21336B;
+}
+
 .piIntro img {
     float: left;
     margin: 10px;
     padding-right: 20px;
 }
-
 
 @media only screen and (max-device-width : 480px) {
     .jspsych-display-element {
