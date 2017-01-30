@@ -1,0 +1,74 @@
+<!doctype html>
+<html>
+<head>
+    <title>My experiment</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="jspsych-5.0/jspsych.js"></script>
+    <script src="jspsych-5.0/plugins/jspsych-text.js"></script>
+    <script src="jspsych-5.0/plugins/jspsych-button-response.js"></script>
+    <script src="jspsych-5.0/plugins/jspsych-call-function.js"></script>
+    <script src="jspsych-5.0/plugins/jspsych-single-stim.js"></script>
+
+    <script src="js/missing-letters.js"></script>
+    <script src="js/sentence-reveal.js"></script>
+
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+    <script type="text/javascript"
+            src="http://ajax.googleapis.com/ajax/libs/mootools/1.2.4/mootools-yui-compressed.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-csv/0.71/jquery.csv-0.71.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.1.2/papaparse.min.js"></script>
+    <link href="jspsych-5.0/css/jspsych.css" rel="stylesheet" type="text/css"></link>
+
+</head>
+<body>
+</body>
+<script>
+
+    function parseData(url, callBack) {
+        Papa.parse(url, {
+            download: true,
+            dynamicTyping: true,
+            header: true,
+            complete: function (results) {
+                callBack(results.data);
+            }
+        });
+    }
+
+    parseData('./scenarios/scenarios.csv', doStuff);
+
+
+
+    // This is called when we complete parsing the CSV file, and will in tern build all the trials.
+    function doStuff(scenarios) {
+
+        /* create experiment timeline array */
+        var timeline = [];
+
+        // Loop through the timeline creating scenerios
+        for (var k = 0; k < 5; k++) {
+            var paragraph = {
+                type: 'sentence-reveal',
+                paragraph: scenarios[k].Scenario
+            };
+            var scenario = {
+                type: 'missing-letters',
+                phrase: scenarios[k].PositiveS,
+                letters_to_remove: 2
+            };
+            timeline.push(paragraph);
+            timeline.push(scenario);
+        }
+
+        jsPsych.init({
+            timeline: timeline,
+            on_finish: function (data) {
+                jsPsych.data.displayData();
+                //window.location.assign(contextRoot + "jspsych/completed/" + csvFile);
+            }
+            //saveData("DutchArticles"+SubjectID+".csv", jsPsych.data.dataAsCSV())}
+        });
+    }
+    /*]]>*/
+</script>
+</html>
