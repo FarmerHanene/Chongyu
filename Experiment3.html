@@ -29,8 +29,8 @@
         <img src="/images/header-minimal.png">
   </div>
   <div id="container">
-      <div id="score"/>
-      <div id="jspsych-target"/>
+      <div id="score"></div>
+      <div id="jspsych-target"></div>
   </div>
 
 </body>
@@ -47,6 +47,11 @@
         });
     }
     parseData('./scenarios/scenarios.csv', doStuff);
+
+    function updateScore(trial_data) {
+        if(trial_data.correct == true) score++;
+        document.getElementById('score').textContent = "score: " +score ;
+    }
 
     // This score is incremented for every correct answer and displayed
     // to the user.
@@ -74,7 +79,8 @@
             correct_choice: 'Yes'
         };
 
-        timeline.push(vividness);
+        // Randomize the scenarios
+        var scenarios = jsPsych.randomization.sample(scenarios, 5, false);
 
         // Loop through the timeline creating scenerios
         for (var k = 0; k < 5; k++) {
@@ -86,22 +92,20 @@
                 type: 'missing-letters',
                 phrase: scenarios[k].PositiveS,
                 letters_to_remove: 2,
-                on_finish: function(trial_data){
-                    if(trial_data.correct == true) score++;
-                    $("#score").text("score: " + score);
-                }
+                on_finish: function(trial_data){ updateScore(trial_data); }
             };
             var question = {
                 type: 'button-response-correct',
                 is_html: true,
                 stimulus: scenarios[k].Questions,
                 choices: ['Yes', 'No'],
-                correct_choice: 'Yes'
+                correct_choice: 'Yes',
+                on_finish: function(trial_data){ updateScore(trial_data); }
             };
 
             console.log(jsPsych.data);
 
-            // Add vividness question after ...
+            // Add vividness question after every 5 questions...
             if(k > 0 && k%5 == 0) timeline.push(vividness);
 
             timeline.push(paragraph);
