@@ -78,6 +78,12 @@ div.piPlayerHeader {
     padding-top: 20px;
     clear: none;
 }
+
+#score {
+    color: #555555;
+    text-align: right;
+}
+
 /*
 p {
     font-size: 120%;
