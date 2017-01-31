@@ -31,9 +31,11 @@ div.piPlayerHeader {
     padding-right: 20px;
 }
 
+
 @media only screen and (max-device-width : 480px) {
-    .jspsych-display-element {
+    #container {
         width: auto;
+        height: auto;
         margin: 50px 5px 50px 5px;
     }
     #jspsych-progressbar-outer {
@@ -49,17 +51,16 @@ div.piPlayerHeader {
         margin: 10px 0px;
     }
 
-    #jspsych-target {
-        height: auto;
-    }
-
     .piIntro img {
         width: 100px;
     }
 }
 
+#container {
 
-#jspsych-target {
+}
+
+#container {
     display:block;
     position: relative;
     color: black;

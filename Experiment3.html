@@ -18,8 +18,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-csv/0.71/jquery.csv-0.71.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.1.2/papaparse.min.js"></script>
 
-    <link href="jspsych-5.0/css/jspsych.css" rel="stylesheet" type="text/css"></link>
-    <link href="experiment.css" rel="stylesheet" type="text/css"></link>
+    <link href="css/jspsych-mobile.css" rel="stylesheet" type="text/css"></link>
+    <link href="css/experiment.css" rel="stylesheet" type="text/css"></link>
 
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
@@ -28,7 +28,9 @@
   <div class="piPlayerHeader">
         <img src="/images/header-minimal.png">
   </div>
-  <div id="jspsych-target">
+  <div id="container">
+      <div id="score"/>
+      <div id="jspsych-target"/>
   </div>
 
 </body>
@@ -44,12 +46,13 @@
             }
         });
     }
-
     parseData('./scenarios/scenarios.csv', doStuff);
 
+    // This score is incremented for every correct answer and displayed
+    // to the user.
+    var score = 0;
 
-
-    // This is called when we complete parsing the CSV file, and will in tern build all the trials.
+        // This is called when we complete parsing the CSV file, and will in tern build all the trials.
     function doStuff(scenarios) {
 
         /* create experiment timeline array */
@@ -82,7 +85,11 @@
             var scenario = {
                 type: 'missing-letters',
                 phrase: scenarios[k].PositiveS,
-                letters_to_remove: 2
+                letters_to_remove: 2,
+                on_finish: function(trial_data){
+                    if(trial_data.correct == true) score++;
+                    $("#score").text("score: " + score);
+                }
             };
             var question = {
                 type: 'button-response-correct',
@@ -91,6 +98,8 @@
                 choices: ['Yes', 'No'],
                 correct_choice: 'Yes'
             };
+
+            console.log(jsPsych.data);
 
             // Add vividness question after ...
             if(k > 0 && k%5 == 0) timeline.push(vividness);
