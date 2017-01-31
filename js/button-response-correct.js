@@ -88,7 +88,8 @@ jsPsych.plugins["button-response-correct"] = (function() {
     // store response
     var response = {
       rt: -1,
-      button: -1
+      button: -1,
+      correct: true
     };
 
     // start time
@@ -124,6 +125,7 @@ jsPsych.plugins["button-response-correct"] = (function() {
     // Deals with an incorrect response, by hiding the buttons, showing an error message
     // forcing a pause of 2 seconds, then redisplaying the buttons.
     function handle_incorrect() {
+      response.correct = false;
       $("#jspsych-button-response-incorrect").show();
       $("#jspsych-button-response-btngroup").hide();
 
@@ -146,7 +148,8 @@ jsPsych.plugins["button-response-correct"] = (function() {
       var trial_data = {
         "rt": response.rt,
         "stimulus": trial.stimulus,
-        "button_pressed": response.button
+        "button_pressed": response.button,
+        "correct": response.correct
       };
 
       // clear the display
