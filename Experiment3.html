@@ -38,7 +38,7 @@
 
     // DEFAULT SETTINGS
     var total_scenarios = 2;  // How many scenarios should be randomly selected out of the full set?
-    var condition = "POSITIVE_NEGATION"; // Can be POSITIVE, POSITIVE_NEGATION, FIFTY_FIFTY_RANDOM, FIFTY_FIFTY_BLOCKED, NEUTRAL
+    var condition = "FIFTY_FIFTY_RANDOM"; // Can be POSITIVE, POSITIVE_NEGATION, FIFTY_FIFTY_RANDOM, FIFTY_FIFTY_BLOCKED, NEUTRAL
 
     function parseData(url, callBack) {
         Papa.parse(url, {
@@ -174,18 +174,26 @@
             var paragraph;
             var phrase;
             var correctChoice;
-
+            var positive = true;
             switch (condition) {
                 case "POSITIVE_NEGATION":
                     paragraph = scenarios[k].Scenario.replace("[negation]", scenarios[k].Negation);
-                    phrase = scenarios[k].PositiveS;
-                    correctChoice = scenarios[k].PositiveQ;
                     break;
                 case "POSITIVE":
                     paragraph = scenarios[k].Scenario.replace("[negation]", "");
-                    phrase = scenarios[k].PositiveS;
-                    correctChoice = scenarios[k].PositiveQ;
                     break;
+                case "FIFTY_FIFTY_RANDOM":
+                    paragraph = scenarios[k].Scenario.replace("[negation]", "");
+                    if (Math.random() >= 0.5) positive = false;
+                    break;
+            }
+
+            if(positive) {
+                phrase = scenarios[k].PositiveS;
+                correctChoice = scenarios[k].PositiveQ;
+            } else {
+                phrase = scenarios[k].NegativeS;
+                correctChoice = scenarios[k].NegativeQ;
             }
 
             console.log("k = " + k + "::" + scenarios[k].Scenario);
