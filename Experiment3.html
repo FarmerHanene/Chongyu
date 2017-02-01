@@ -38,9 +38,7 @@
 
     // DEFAULT SETTINGS
     var total_scenarios = 2;  // How many scenarios should be randomly selected out of the full set?
-    var condition = "POSITIVE"; // Can be POSITIVE, POSITIVE_NEGATION, FIFTY_FIFTY_RANDOM, FIFTY_FIFTY_BLOCKED, NEUTRAL
-
-
+    var condition = "POSITIVE_NEGATION"; // Can be POSITIVE, POSITIVE_NEGATION, FIFTY_FIFTY_RANDOM, FIFTY_FIFTY_BLOCKED, NEUTRAL
 
     function parseData(url, callBack) {
         Papa.parse(url, {
@@ -173,21 +171,27 @@
         // Loop through the time-line creating scenarios
         for (var k = 0; k < total_scenarios; k++) {
 
+            var paragraph;
             var phrase;
             var correctChoice;
 
-            if(condition == "POSITIVE") {
-                phrase = scenarios[k].PositiveS;
-                correctChoice = scenarios[k].PositiveQ;
-            } else {
-                phrase = scenarios[k].NegativeS;
-                correctChoice = scenarios[k].NegativeQ;
+            switch (condition) {
+                case "POSITIVE_NEGATION":
+                    paragraph = scenarios[k].Scenario.replace("[negation]", scenarios[k].Negation);
+                    phrase = scenarios[k].PositiveS;
+                    correctChoice = scenarios[k].PositiveQ;
+                    break;
+                case "POSITIVE":
+                    paragraph = scenarios[k].Scenario.replace("[negation]", "");
+                    phrase = scenarios[k].PositiveS;
+                    correctChoice = scenarios[k].PositiveQ;
+                    break;
             }
 
             console.log("k = " + k + "::" + scenarios[k].Scenario);
             var paragraph = {
                 type: 'sentence-reveal',
-                paragraph: scenarios[k].Scenario
+                paragraph: paragraph
             };
             var scenario = {
                 type: 'missing-letters',
