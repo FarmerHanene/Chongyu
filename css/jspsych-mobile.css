@@ -27,10 +27,10 @@ p {
 .small {
     font-size: 75%;
 }
-.large {
+.large, h2 {
     font-size: 125%;
 }
-.very-large {
+.very-large, h1 {
     font-size: 150%;
 }
 

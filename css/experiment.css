@@ -70,6 +70,7 @@ div.piPlayerHeader {
     margin: 40px auto;
     border: 1px solid #bbb;
     min-height: 600px;
+    max-width: 800px;
     padding: 50px;
 }
 
@@ -82,6 +83,15 @@ div.piPlayerHeader {
 #score {
     color: #555555;
     text-align: right;
+}
+
+div.vividness_followup {
+    text-align: center;
+}
+div.vividness_followup img {
+    display: block;
+    margin: auto;
+    max-width: 100%;
 }
 
 /*

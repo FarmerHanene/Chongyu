@@ -36,6 +36,12 @@
 </body>
 <script>
 
+    // DEFAULT SETTINGS
+    var total_scenarios = 2;  // How many scenarios should be randomly selected out of the full set?
+    var condition = "POSITIVE"; // Can be POSITIVE, POSITIVE_NEGATION, FIFTY_FIFTY_RANDOM, FIFTY_FIFTY_BLOCKED, NEUTRAL
+
+
+
     function parseData(url, callBack) {
         Papa.parse(url, {
             download: true,
@@ -46,19 +52,70 @@
             }
         });
     }
-    parseData('./scenarios/scenarios.csv', doStuff);
+    parseData('./scenarios/scenarios.csv', build_timeline);
 
-    function updateScore(trial_data) {
-        if(trial_data.correct == true) score++;
-        document.getElementById('score').textContent = "score: " +score ;
-    }
 
     // This score is incremented for every correct answer and displayed
     // to the user.
-    var score = 0;
+    var score_letters   = 0;
+    var score_questions = 0;
 
-        // This is called when we complete parsing the CSV file, and will in tern build all the trials.
-    function doStuff(scenarios) {
+    function updateScore() {
+        document.getElementById('score').textContent = "score: " + (score_letters + score_questions) ;
+    }
+
+    function final_trial_score() {
+        return {
+            type: 'button-response',
+            is_html: true,
+            choices: ['Continue'],
+            stimulus: function() {
+                var pct_ct_s = Math.round((score_letters/total_scenarios)*100);
+                var pct_ct_c = Math.round((score_questions/total_scenarios)*100);
+                var score = score_letters + score_questions;
+                var feed_back_score = "You scored " + score + " out of a maximum possible score of " + total_scenarios * 2;;
+                var feed_back_s = 'You filled in the missing letters correctly on the first try ' + pct_ct_s  + '% of the time this round. ';
+                var feed_back_c = 'You answered the yes/no question following each story correctly on the first try ' + pct_ct_c + '% of the time this round. ';
+
+                if (pct_ct_s >= 90) feed_back_s +=
+                    'Great job, we’re really impressed with your ability to complete the stories!';
+                if (pct_ct_s < 90 & pct_ct_s >= 70) feed_back_s+=
+                    'You’re doing well, and we encourage you to pay really close attention to the ' +
+                    'stories to work out what letters are needed to complete the final words. ' +
+                    'This will allow you to get the most out of the training.';
+                else feed_back_s += 'We want to encourage you to pay really close attention to the ' +
+                    'stories to work out what letters are needed to complete the final words. ' +
+                    'This will allow you to get the most out of the training. If any aspect of' +
+                    ' the task is unclear, please email us with any questions at studyteam@mindtrails.org.';
+                if (pct_ct_c >= 90)
+                    feed_back_c += 'That’s terrific, and shows you’re paying really careful attention to the stories!';
+                else if (pct_ct_c < 90 & pct_ct_s >= 70)
+                    feed_back_c += 'You’re doing a good job, and we want to remind you to pay really close attention ' +
+                        'to the whole story each time, including how it ends, and just use the information in the ' +
+                        'story to answer the question. This will allow you to get the most out of the training.';
+                else
+                    feed_back_c += 'We want to remind you to pay really close attention to the whole story ' +
+                        'each time, including how it ends, and just use the information in the story to ' +
+                        'answer the question. This will allow you to get the most out of the training. If' +
+                        'any aspect of the task is unclear, please email us with any questions at ' +
+                        'studyteam@mindtrails.org.';
+
+                return (
+                '<div class="vividness_followup">' +
+                '<img src="../images/finished.jpg' + '"/>' +
+                '<p>' + feed_back_score + "</p>" +
+                '<p>' + feed_back_s + '</p>' +
+                '<p>' + feed_back_c + '</p>')
+            }
+        }
+    }
+
+
+
+    // This is called when we complete parsing the CSV file (see parseData above),
+    // and will in tern build all the trials.
+    function build_timeline(scenarios) {
+
 
         /* create experiment timeline array */
         var timeline = [];
@@ -66,52 +123,110 @@
         // Add an introduction.
         var introduction  = {
             type:'html',
-            url: "introduction.html",
+            url: "snippets/introduction.html",
             cont_btn: "start"
         };
         timeline.push(introduction);
 
+        var vivid_response;
         var vividness = {
             type: 'button-response',
             is_html: true,
             stimulus: 'How vividly did you imagine yourself in the scenario?',
             choices: ['Not at all', 'Somewhat', 'Moderately', 'Very', 'Totally'],
-            correct_choice: 'Yes'
+            on_finish: function(trial_data){
+                if(trial_data.button_pressed > 2) {
+                    vivid_response = true;
+                } else {
+                    vivid_response = false;
+                }
+            }
+        };
+
+        var vividness_final = {
+            type: 'button-response',
+            is_html: true,
+            stimulus: 'Thinking about the set of 40 scenarios you just completed, on average, how vividly did you imagine yourself in the scenarios?',
+            choices: ['Not at all', 'Somewhat', 'Moderately', 'Very', 'Totally']
+        };
+
+
+        // Vivid Follow up - changes based on response.
+        var vividness_followup  = {
+            type:'html',
+            url : function() {
+                if(vivid_response) return "snippets/good-job.html";
+                else return "snippets/imagination.html";
+            },
+            cont_btn: "continue"
+        };
+        // Vivid Follow up - changes based on response.
+        var vividness_followup_halfway  = {
+            type:'html',
+            url: 'snippets/halfway.html',
+            cont_btn: "continue"
         };
 
         // Randomize the scenarios
         var scenarios = jsPsych.randomization.sample(scenarios, 5, false);
 
-        // Loop through the timeline creating scenerios
-        for (var k = 0; k < 5; k++) {
+        // Loop through the time-line creating scenarios
+        for (var k = 0; k < total_scenarios; k++) {
+
+            var phrase;
+            var correctChoice;
+
+            if(condition == "POSITIVE") {
+                phrase = scenarios[k].PositiveS;
+                correctChoice = scenarios[k].PositiveQ;
+            } else {
+                phrase = scenarios[k].NegativeS;
+                correctChoice = scenarios[k].NegativeQ;
+            }
+
+            console.log("k = " + k + "::" + scenarios[k].Scenario);
             var paragraph = {
                 type: 'sentence-reveal',
                 paragraph: scenarios[k].Scenario
             };
             var scenario = {
                 type: 'missing-letters',
-                phrase: scenarios[k].PositiveS,
+                phrase: phrase,
                 letters_to_remove: 2,
-                on_finish: function(trial_data){ updateScore(trial_data); }
+                on_finish: function (trial_data) {
+                    if(trial_data.correct) score_letters++;
+                    updateScore();
+                }
             };
             var question = {
                 type: 'button-response-correct',
                 is_html: true,
                 stimulus: scenarios[k].Questions,
-                choices: ['Yes', 'No'],
-                correct_choice: 'Yes',
-                on_finish: function(trial_data){ updateScore(trial_data); }
+                choices: ["Yes", "No"],
+                correct_choice: correctChoice,
+                on_finish: function (trial_data) {
+                    if(trial_data.correct) score_questions++;
+                    updateScore();
+                }
             };
 
             console.log(jsPsych.data);
 
-            // Add vividness question after every 5 questions...
-            if(k > 0 && k%5 == 0) timeline.push(vividness);
-
+            // Add vividness question after questions 1 and 2...
+            if (k == 1 || k == 2) {
+                timeline.push(vividness);
+                timeline.push(vividness_followup);
+            } else if (k == (total_scenarios / 2) - 1) {
+                timeline.push(vividness);
+                timeline.push(vividness_followup_halfway);
+            }
             timeline.push(paragraph);
             timeline.push(scenario);
             timeline.push(question);
         }
+
+        timeline.push(vividness_final);
+        timeline.push(final_trial_score());
 
         jsPsych.init({
             timeline: timeline,
