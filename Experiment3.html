@@ -37,8 +37,9 @@
 <script>
 
     // DEFAULT SETTINGS
-    var total_scenarios = 2;  // How many scenarios should be randomly selected out of the full set?
-    var condition = "FIFTY_FIFTY_RANDOM"; // Can be POSITIVE, POSITIVE_NEGATION, FIFTY_FIFTY_RANDOM, FIFTY_FIFTY_BLOCKED, NEUTRAL
+    var total_scenarios = 15;  // How many scenarios should be randomly selected out of the full set?
+    var condition = "FIFTY_FIFTY_BLOCKED"; // Can be POSITIVE, POSITIVE_NEGATION, FIFTY_FIFTY_RANDOM, FIFTY_FIFTY_BLOCKED, NEUTRAL
+    var block_size = 5;
 
     function parseData(url, callBack) {
         Papa.parse(url, {
@@ -166,25 +167,32 @@
         };
 
         // Randomize the scenarios
-        var scenarios = jsPsych.randomization.sample(scenarios, 5, false);
+        var scenarios = jsPsych.randomization.sample(scenarios, total_scenarios, false);
 
         // Loop through the time-line creating scenarios
+        var positive = true;
         for (var k = 0; k < total_scenarios; k++) {
-
+            console.debug(scenarios[k]);
             var paragraph;
             var phrase;
             var correctChoice;
-            var positive = true;
             switch (condition) {
                 case "POSITIVE_NEGATION":
+                    positive = true;
                     paragraph = scenarios[k].Scenario.replace("[negation]", scenarios[k].Negation);
                     break;
                 case "POSITIVE":
+                    positive = true;
                     paragraph = scenarios[k].Scenario.replace("[negation]", "");
                     break;
                 case "FIFTY_FIFTY_RANDOM":
                     paragraph = scenarios[k].Scenario.replace("[negation]", "");
                     if (Math.random() >= 0.5) positive = false;
+                    else positive = true;
+                    break;
+                case "FIFTY_FIFTY_BLOCKED":
+                    paragraph = scenarios[k].Scenario.replace("[negation]", "");
+                    if(k > 0 && k % block_size == 0) positive = !positive;
                     break;
             }
 
