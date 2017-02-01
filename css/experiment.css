@@ -71,7 +71,7 @@ div.piPlayerHeader {
     border: 1px solid #bbb;
     min-height: 600px;
     max-width: 800px;
-    padding: 50px;
+    padding: 20px 50px;
 }
 
 
@@ -80,9 +80,14 @@ div.piPlayerHeader {
     clear: none;
 }
 
-#score {
+.status {
+    font-size: .8em;
     color: #555555;
     text-align: right;
+}
+
+.status span {
+    margin-left: 10px;
 }
 
 div.vividness_followup {

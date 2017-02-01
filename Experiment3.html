@@ -29,7 +29,10 @@
         <img src="/images/header-minimal.png">
   </div>
   <div id="container">
-      <div id="score"></div>
+      <div class="status">
+          <span id="score"></span>
+          <span id="progress"></span>
+      </div>
       <div id="jspsych-target"></div>
   </div>
 
@@ -40,6 +43,7 @@
     var total_scenarios = 15;  // How many scenarios should be randomly selected out of the full set?
     var condition = "FIFTY_FIFTY_BLOCKED"; // Can be POSITIVE, POSITIVE_NEGATION, FIFTY_FIFTY_RANDOM, FIFTY_FIFTY_BLOCKED, NEUTRAL
     var block_size = 5;
+    
 
     function parseData(url, callBack) {
         Papa.parse(url, {
@@ -60,8 +64,19 @@
     var score_questions = 0;
 
     function updateScore() {
-        document.getElementById('score').textContent = "score: " + (score_letters + score_questions) ;
+        document.getElementById('score').textContent = "Score: " + (score_letters + score_questions) ;
     }
+
+    var progress = -1;
+    function updateProgress() {
+        progress++;
+        document.getElementById('progress').textContent =
+            "Completed : " + progress +  " of " + total_scenarios;
+    }
+
+    updateProgress();
+    updateScore();
+
 
     function final_trial_score() {
         return {
@@ -224,9 +239,10 @@
                 stimulus: scenarios[k].Questions,
                 choices: ["Yes", "No"],
                 correct_choice: correctChoice,
-                on_finish: function (trial_data) {
+                on_finish: function (trial_data, k) {
                     if(trial_data.correct) score_questions++;
                     updateScore();
+                    updateProgress();
                 }
             };
 
