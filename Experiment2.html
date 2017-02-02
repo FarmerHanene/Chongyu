@@ -82,6 +82,59 @@
         }
         return exAns;
     }
+
+
+    // Creates the sentence reveal for each scenario
+    function buildSentenceReveal(i, n_trials, stim, sentence) {
+        var trial_pre = {
+            type: 'button-response',
+            stim: stim,
+            sentence: sentence,
+            stimulus: function () {
+                return "<div class='center-content'>" + jsPsych.currentTrial().stim + "</div>"
+            },
+            is_html: true,
+            timing_post_trial: 0,
+            count: i + 1,
+            trials: n_trials + 1,
+            // dynamic part of the trial, always add the div where the feedback is going to show
+            do_it: function () {
+                display_element = jsPsych.getDisplayElement();
+                display_element.append($('<div>', {
+                    "id": 'feedback',
+                    "class": 'center-content block-center',
+                    "html": '</br>'
+                }));
+                display_element.append($('<div>', {
+                    "id": 'count',
+                    "class": 'center-content block-center',
+                    "html": jsPsych.currentTrial().count + ' of ' + (n_trials )
+                }));
+            },
+            choices: ['Continue']
+        };
+
+        // This trial forces a pause between revealing sentences, so that each sentence can only be revealed after
+        // the participant has read the last sentence.
+        return {
+            chunk_type: 'while',
+            timeline: [trial_pre],
+            // this is how we end the while loop
+            loop_function: function (data) {
+                console.log(jsPsych.currentTrial().sentence);
+                if (jsPsych.currentTrial().sentence.split(' ').length * 100 > new Date().getTime() - startTime) {
+                    return true;
+                }
+                else {
+                    return false;
+                }
+            }
+        };
+
+
+    }
+
+    // This is called when we complete parsing the CSV file, and will in tern build all the trials.
     function doStuff(scenarios) {
         // empty timeline
         var timeline = [];
@@ -117,50 +170,10 @@
                     }
                 }
                 timeline.push(start_time_trial); // uses call-function plugin to record roughly when the first trial in the loop began.
-                // here's the trial
-                var trial_pre = {
-                    type: 'button-response',
-                    stim: stim,
-                    sentence: sentence,
-                    stimulus: function () {
-                        return "<div class='center-content'>" + jsPsych.currentTrial().stim + "</div>"
-                    },
-                    is_html: true,
-                    timing_post_trial: 0,
-                    count: i + 1,
-                    trials: n_trials + 1,
-                    // dynamic part of the trial, always add the div where the feedback is going to show
-                    do_it: function () {
-                        display_element = jsPsych.getDisplayElement();
-                        display_element.append($('<div>', {
-                            "id": 'feedback',
-                            "class": 'center-content block-center',
-                            "html": '</br>'
-                        }));
-                        display_element.append($('<div>', {
-                            "id": 'count',
-                            "class": 'center-content block-center',
-                            "html": jsPsych.currentTrial().count + ' of ' + (n_trials )
-                        }));
-                    },
-                    choices: ['Continue']
-                };
-                // here's our while loop
-                var while_pre = {
-                    chunk_type: 'while',
-                    timeline: [trial_pre],
-                    // this is how we end the while loop
-                    loop_function: function (data) {
-                        console.log(jsPsych.currentTrial().sentence);
-                        if (jsPsych.currentTrial().sentence.split(' ').length * 100 > new Date().getTime() - startTime) {
-                            return true;
-                        }
-                        else {
-                            return false;
-                        }
-                    }
-                };
-                timeline.push(while_pre);
+
+                // here's the sentenceReveal
+                timeline.push(buildSentenceReveal(i, n_trials, stim, sentence));
+
             }
             var whole_word = scenarios[i].PositiveS.toLowerCase();
             // remove the letter; store the word and the letter; set the word to lowerCase first.
@@ -234,7 +247,7 @@
                     }));
                 },
                 choice: choice,
-                // choices have to be dynamic
+                // choices have to be dynam1ic
                 choices: function () {
                     if (trial.timeline[0].end) {
                         trial.timeline[0].end = false;
