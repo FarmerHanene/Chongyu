@@ -10,16 +10,11 @@
   <script src="jspsych-5.0/plugins/jspsych-button-response.js"></script>
   <script src="jspsych-5.0/plugins/jspsych-survey-text.js"></script>
 
-  <script src="js/missing-letters.js"></script>
   <script src="js/sentence-reveal.js"></script>
-  <script src="js/button-response-correct.js"></script>
-  <script src="js/survey-text-correct.js"></script>
-
   <script src="spellcheck.js"></script>
   <script type="text/javascript" src="Typo.js/typo/typo.js"></script>
+
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
-
-
   <script type="text/javascript"
           src="http://ajax.googleapis.com/ajax/libs/mootools/1.2.4/mootools-yui-compressed.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-csv/0.71/jquery.csv-0.71.min.js"></script>
@@ -27,26 +22,11 @@
 
   <link href="css/jspsych-mobile.css" rel="stylesheet" type="text/css"></link>
   <link href="css/experiment.css" rel="stylesheet" type="text/css"></link>
-
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script type="text/javascript">
-    var dictionary;
 
-    function load_dictionary() {
-  //	Loading affix data
-      $.get( 'Typo.js/typo/dictionaries/en_US/en_US.aff', function ( affData ) {
-  //	Loading English dictionary (this takes a few seconds)
-      $.get( 'Typo.js/typo/dictionaries/en_US/en_US.dic', function ( wordsData ) {
-  //	loading-progress', Initializing Typo
-//          dictionary = new Typo( "en_US", affData, wordsData );
-      return(new Typo( "en_US", affData, wordsData ));
-        } );
-      } );
-    }
-    </script>
 </head>
- <body>
-  <div id="jspsych-target"></div>
+ <body >
+   <div id="jspsych-target"></div>
 
  </body>
  <script>
@@ -64,77 +44,51 @@
  parseData('./scenarios/scenarios.csv', build_timeline);
 
 
-  total_scenarios = 5;
+  total_scenarios = 20;
   var condition = "FIFTY_FIFTY_BLOCKED"; // Can be POSITIVE, POSITIVE_NEGATION, FIFTY_FIFTY_RANDOM, FIFTY_FIFTY_BLOCKED, NEUTRAL
   var block_size = 5;
+  var permit_num = 3;
 
   function build_timeline(scenarios){
 
     var timeline =[];
+    var responseList = [];
+    var rtList = [];
+    var attemptList = [];
+    var attemptRTList = [];
+
     for(var k = 0; k < total_scenarios; k ++){
-    var paragraph = scenarios[k].Scenario.replace("[negation]", "");
-    var phrase = scenarios[k].PositiveS;
-//     console.log(scenario);
+        var paragraph = scenarios[k].Scenario.replace("[negation]", "");
+        var phrase = scenarios[k].PositiveS;
+        var response;
 
-     paragraph1 = {
-         type: 'sentence-reveal',
-         paragraph: paragraph
-     };
+        paragraphReveal = {
+             type: 'sentence-reveal',
+             paragraph: paragraph
+         };
 
-    dictionary = load_dictionary();
-
-
-    var spellcheck = {
-      type:'spellcheck',
-      dictionary: dictionary
-    /*  on_finish: function(data){
-        console.log(data.responses)
-        function checkword(word){
-          var timeline = [];
-          var is_spelled_correctly = dictionary.check( word );
-          //var resultsContainer ;
-          display_element = jsPsych.getDisplayElement();
-         //display_element.html( '' );
-          if(word != is_spelled_correctly){
-        //  while(word != is_spelled_correctly){
-             var array_of_suggestions = dictionary.suggest( word );
-             display_element.append( $( '<center>' ).append( 'word mispelled, suggetions:' ));
-             display_element.append( $( '<center>' ).append( $( '<code>' ).text( array_of_suggestions.join( ', ' ) ) ) );
-             timeline.push(spellcheck);
-          }
-          //display_element.html('');
+        var spellcheck = {
+          type:'spellcheck',
+          responseList: function() {return responseList;},
+          serialNumber: k,
+          permitNumber: permit_num,
+          on_finish:function(data){
+              responseList.push(data.finalResponse);
+          },   //end of on_finish
         }
-
-//        checkword(data.responses);
-      }
-*/
-    }
-
-    timeline.push(paragraph1);
-//  console.log(paragraph);
-  //timeline.push(scenario);
-//  console.log(scenario);
-//timeline.push(open_end_question);
-    timeline.push(spellcheck);
-
-
-}
-
-
-
+        timeline.push(paragraphReveal);
+        timeline.push(spellcheck);
+    }//end of for loop
 
     jsPsych.init({
         timeline: timeline,
         display_element: $("#jspsych-target"),
         on_finish: function (data) {
             jsPsych.data.displayData();
-            //window.location.assign(contextRoot + "jspsych/completed/" + csvFile);
         }
-        //saveData("DutchArticles"+SubjectID+".csv", jsPsych.data.dataAsCSV())}
     });
 
 }
-
 
  </script>
 </html>
